@@ -24,29 +24,39 @@
 
 # Store user input into variable called switch
 switch=$1
+user=$whoami
 
-# First, check if they forgot to specifiy a monitor
-if [ -z "$switch" ]; then
-	echo "Error: user must specifiy which monitor to output to [pitft or hdmi]"
-# Second, check for typos
-elif [ "$switch" != "pitft" ] && [ "$switch" != "hdmi" ]; then
-	echo "Error: Invalid input. User must specify [pitft or hdmi] exactly"
-# Third, check if they specified the pitft display. if they did, let them
-# know and use sed to appropriately modify the file
-elif [ "$switch" = "pitft" ]; then
-	echo "User has selected pitft"
-	sed -i 's/fb0/fb1/g' /usr/share/X11/xorg.conf.d/99-fbdev.conf
-elif [ "$switch" = "hdmi" ]; then
-	echo "User has selected hdmi"
-	sed -i 's/fb1/fb0/g' /usr/share/X11/xorg.conf.d/99-fbdev.conf
+# Before we start, make sure that the user used "sudo" so that the
+# script can modify the file
+if [[ $user = "root" ]]; then
+	# First, check if they forgot to specifiy a monitor
+	if [[ -z "$switch" ]]; then
+		echo "Error: user must specifiy which monitor to output to [pitft or hdmi]"
+		success=false
+	# Second, check for typos
+	elif [[ "$switch" != "pitft" ]] && [[ "$switch" != "hdmi" ]]; then
+		echo "Error: Invalid input. User must specify [pitft or hdmi] exactly"
+		success=false
+	# Third, check if they specified the pitft display. if they did, let them
+	# know and use sed to appropriately modify the file
+	elif [[ "$switch" = "pitft" ]]; then
+		echo "User has selected pitft"
+		sed -i 's/fb0/fb1/g' /usr/share/X11/xorg.conf.d/99-fbdev.conf
+		success=true # flag to see if should run reboot
+	elif [[ "$switch" = "hdmi" ]]; then
+		echo "User has selected hdmi"
+		sed -i 's/fb1/fb0/g' /usr/share/X11/xorg.conf.d/99-fbdev.conf
+		success=true
+	fi
+	# ask to reboot now. Yes or No
+	while $success; do
+		read -p "You must reboot for changes to take effect. Do you wish to reboot now? (y/n)" yn
+		case $yn in
+			[Nn]* ) exit;;
+			[Yy]* ) reboot;;
+			* ) echo "Please answer y or n";;
+		esac
+	done
+else
+	echo "Error: Must execute script as sudo."
 fi
-
-# ask to reboot now. Yes or No
-while true; do
-	read -p "You must reboot for changes to take effect. Do you wish to reboot now? (y/n)" yn
-	case $yn in
-		[Nn]* ) exit;;
-		[Yy]* ) reboot;;
-		* ) echo "Please answer y or n";;
-	esac
-done	
