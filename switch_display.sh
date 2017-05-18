@@ -24,11 +24,10 @@
 
 # Store user input into variable called switch
 switch=$1
-user=$whoami
 
 # Before we start, make sure that the user used "sudo" so that the
 # script can modify the file
-if [[ $user = "root" ]]; then
+if [[ "$(whoami)" == "root" ]]; then
 	# First, check if they forgot to specifiy a monitor
 	if [[ -z "$switch" ]]; then
 		echo "Error: user must specifiy which monitor to output to [pitft or hdmi]"
